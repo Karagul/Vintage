@@ -32,6 +32,8 @@ ca_pinot$temps <- c(0)
 ca_pinot$precip <- c(0)
 #subset the CA_pinot set for the years we have data on 1999 - 2017
 ca_pinot <- subset(ca_pinot, ca_pinot$vintage >= 1999)
+#get rid of wines without price 
+ca_pinot <- subset(ca_pinot, !is.na(ca_pinot$price))
 #loop 
 for(i in 1:nrow(ca_pinot)){
   yr <- ca_pinot$vintage[i]
@@ -62,5 +64,19 @@ test_ <- scaled[-index,]
 
 library(neuralnet)
 n <- names(train_)
-f <- as.formula(paste("medv ~", paste(n[!n %in% "medv"], collapse = " + ")))
-nn <- neuralnet(f,data=train_,hidden=c(5,3),linear.output=T)
+f <- as.formula(paste("price ~", paste(n[!n %in% "price"], collapse = " + ")))
+nn <- neuralnet(f,data=train_,hidden=1,linear.output=T)
+
+#evaluating nn results 
+pr.nn <- compute(nn,test_[,1:3])
+
+pr.nn_ <- pr.nn$net.result*(max(clean$price)-min(clean$price))+min(clean$price)
+test.r <- (test_$medv)*(max(clean$price)-min(clean$price))+min(clean$price)
+
+MSE.nn <- sum((test.r - pr.nn_)^2)/nrow(test_)
+plot(nn)
+MSE.nn 
+#clearly the NN is overfitting the data. 
+#however this may be a good sign as we expand our geographic region, use monthly temps, soil, and sunlight data 
+#The most important part of this project will be finding a way to automate data retrieval 
+#such that wine from any region can pull up avg monthly temps for that region AND vintage. 
