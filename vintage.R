@@ -52,4 +52,16 @@ test <- clean[-index,]
 lm.fit.simple <- lm(price~points+temps+precip, data=clean)
 summary(lm.fit.simple)
 #log regression 
-logfit <- lm(log(price~points+temps+precip, data=clean))
+logfit <- lm(log(price)~points+temps+precip, data=clean)
+summary(logfit)
+
+###Let's try to rephrase / reestablish the research question at hand. 
+### Why would it be useful to predict the price of a wine? Why would I want to know the price given the region and the grape?
+### This might be useful for farmers to know if they have a good Vintage or not (If the weather conditions are ideal for their 
+### specific grape)
+
+### On the consumer side, it might be more insightful to derive the Score of a wine. Given the temperature data and the type of wine,
+### how "good" will this wine be? Price is not always indicative of quality so a score might be a better indicator. 
+
+### Text analytics would be good for a recommendation system. Input the kind of wines that you like and receive recommendations a la Trade coffeee?
+### we would be mining the text fields for descriptors of wine: fruity, bold, strong, light, acidity etc. This would be fun but highly subjective. 
