@@ -3,7 +3,7 @@ library(dplyr)
 library(data.table)
 library(stringr)
 wine <- fread('D:/WINE DATA/winemag-data-130k-v2.csv')
-wine <- wine[,-1]
+wine <- wine[,-1] #drop index column
 summary(wine)
 
 #california wines 
@@ -34,7 +34,7 @@ ca_pinot$precip <- c(0)
 ca_pinot <- subset(ca_pinot, ca_pinot$vintage >= 1999)
 #get rid of wines without price 
 ca_pinot <- subset(ca_pinot, !is.na(ca_pinot$price))
-#loop 
+#loop and append climate data
 for(i in 1:nrow(ca_pinot)){
   yr <- ca_pinot$vintage[i]
   ca_pinot$temps[i] <- STS[STS$DATE == yr,5]
@@ -49,34 +49,7 @@ index <- sample(1:nrow(clean),round(0.75*nrow(clean)))
 train <- clean[index,]
 test <- clean[-index,]
 #make a general lineal model
-lm.fit <- glm(price~points+temps+precip, data=clean)
-summary(lm.fit)
-pr.lm <- predict(lm.fit,test)
-MSE.lm <- sum((pr.lm - test$price)^2, na.rm = T)/nrow(test)
-#the MSE is AWFUL, try a neural network? 
-#begin normalization
-maxs <- apply(clean, 2, max) 
-mins <- apply(clean, 2, min)
-scaled <- as.data.frame(scale(clean, center = mins, scale = maxs - mins))
-
-train_ <- scaled[index,]
-test_ <- scaled[-index,]
-
-library(neuralnet)
-n <- names(train_)
-f <- as.formula(paste("price ~", paste(n[!n %in% "price"], collapse = " + ")))
-nn <- neuralnet(f,data=train_,hidden=1,linear.output=T)
-
-#evaluating nn results 
-pr.nn <- compute(nn,test_[,1:3])
-
-pr.nn_ <- pr.nn$net.result*(max(clean$price)-min(clean$price))+min(clean$price)
-test.r <- (test_$medv)*(max(clean$price)-min(clean$price))+min(clean$price)
-
-MSE.nn <- sum((test.r - pr.nn_)^2)/nrow(test_)
-plot(nn)
-MSE.nn 
-#clearly the NN is overfitting the data. 
-#however this may be a good sign as we expand our geographic region, use monthly temps, soil, and sunlight data 
-#The most important part of this project will be finding a way to automate data retrieval 
-#such that wine from any region can pull up avg monthly temps for that region AND vintage. 
+lm.fit.simple <- lm(price~points+temps+precip, data=clean)
+summary(lm.fit.simple)
+#log regression 
+logfit <- lm(log(price~points+temps+precip, data=clean))
